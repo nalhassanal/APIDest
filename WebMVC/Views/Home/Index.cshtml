@@ -1,0 +1,49 @@
+﻿@{
+    ViewData["Title"] = "Home";
+}
+
+<div class="container py-5">
+    <h1 class="display-4">Microservices Dashboard</h1>
+    <p class="lead">
+        This web dashboard visualizes key World Bank data through custom API endpoints and an embedded Power BI report.
+    </p>
+
+    <div class="row my-4">
+        <!-- Example metric cards -->
+        <div class="col-md-4">
+            <div class="card text-white bg-primary mb-3">
+                <div class="card-body">
+                    <h5 class="card-title">API Endpoints</h5>
+                    <p class="card-text">5 live endpoints</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card text-white bg-success mb-3">
+                <div class="card-body">
+                    <h5 class="card-title">Data Source</h5>
+                    <p class="card-text">World Bank API</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card text-white bg-info mb-3">
+                <div class="card-body">
+                    <h5 class="card-title">CI/CD Status</h5>
+                    <p class="card-text">Pipeline running</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <h2>Dashboard</h2>
+    <!-- Embed Power BI iframe -->
+    <div class="ratio ratio-16x9 mb-4">
+        <iframe src="https://app.powerbi.com/..." frameborder="0" allowFullScreen></iframe>
+    </div>
+
+    <p>
+        <a class="btn btn-outline-primary" href="/Metrics/GDP">View GDP Metrics</a>
+        <a class="btn btn-outline-secondary" href="/Metrics/Population">View Population Metrics</a>
+    </p>
+</div>
