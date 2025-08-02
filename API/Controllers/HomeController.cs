@@ -19,6 +19,7 @@ namespace API.Controllers
             _logger = logger;
         }
 
+        // api comment
         [HttpGet("GetWeatherForecast")]
         public IEnumerable<WeatherForecast> Get()
         {
