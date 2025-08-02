@@ -1,5 +1,6 @@
-using Microsoft.AspNetCore.Mvc;
 using Entities;
+using Microsoft.AspNetCore.Mvc;
+using System.Net.Http;
 
 namespace API.Controllers
 {
@@ -7,19 +8,20 @@ namespace API.Controllers
     [Route("api/Home")]
     public class HomeController : ControllerBase
     {
+        private readonly ILogger<HomeController> _logger;
+        private readonly HttpClient _httpClient;
+
+        public HomeController(ILogger<HomeController> logger, IHttpClientFactory httpClientFactory)
+        {
+            _logger = logger;
+            _httpClient = httpClientFactory.CreateClient();
+        }
+
         private static readonly string[] Summaries = new[]
         {
             "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"
         };
 
-        private readonly ILogger<HomeController> _logger;
-
-        public HomeController(ILogger<HomeController> logger)
-        {
-            _logger = logger;
-        }
-
-        // api comment
         [HttpGet("GetWeatherForecast")]
         public IEnumerable<WeatherForecast> Get()
         {
@@ -30,6 +32,32 @@ namespace API.Controllers
                 Summary = Summaries[Random.Shared.Next(Summaries.Length)]
             })
             .ToArray();
+        }
+
+        // Test
+        [HttpGet("GetData/{countryCode}")]
+        public async Task<IActionResult> GetWorldBankData(string countryCode)
+        {
+            var url = $"http://api.worldbank.org/v2/country/{countryCode}/indicator/NY.GDP.MKTP.CD?format=json";
+
+            try
+            {
+                var response = await _httpClient.GetAsync(url);
+                response.EnsureSuccessStatusCode();
+
+                var content = await response.Content.ReadAsStringAsync();
+                return Content(content, "application/json");
+            }
+            catch (HttpRequestException ex)
+            {
+                _logger.LogError(ex, "Error fetching World Bank data.");
+                return StatusCode(503, "Failed to contact World Bank API.");
+            }
+            catch (System.Exception ex)
+            {
+                _logger.LogError(ex, "Unhandled error.");
+                return StatusCode(500, "Internal server error.");
+            }
         }
     }
 }
