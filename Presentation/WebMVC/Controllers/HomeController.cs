@@ -28,6 +28,16 @@ namespace WebMVC.Controllers
             return View(result);
         }
 
+        public IActionResult TariffAndTrade()
+        {
+            return View();
+        }
+
+        public IActionResult MadeOrReceivedDigitalPayment()
+        {
+            return View();
+        }
+
         public IActionResult Privacy()
         {
             return View();
