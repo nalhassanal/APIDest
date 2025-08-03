@@ -163,6 +163,7 @@ namespace API.Controllers
             }
         }
 
+        // Helper, to be moved to Helper class.
         private List<RawWorldBankData> ExtractData(string json)
         {
             var wrapper = JsonConvert.DeserializeObject<List<object>>(json);
