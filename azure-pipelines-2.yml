@@ -29,7 +29,7 @@ stages:
         azureSubscriptionEndpoint: $(azureSubscriptionEndpoint)
         azureContainerRegistry: $(containerRegistry)
         command: buildAndPush
-        repository: $(containerRegistry)/$(imageRepository)  # Updated to include ACR prefix
+        repository: $(containerRegistry)/$(imageRepository)
         dockerfile: $(dockerfilePath)
         tags: |
           $(tag)
