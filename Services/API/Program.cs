@@ -19,8 +19,6 @@ namespace API
                 .AddPolicyHandler(GetRetryPolicy())
                 .AddPolicyHandler(GetTimeoutPolicy());
 
-            builder.Services.AddMemoryCache();
-
             // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen();
@@ -58,7 +56,7 @@ namespace API
         // Polly timeout helper
         static IAsyncPolicy<HttpResponseMessage> GetTimeoutPolicy()
         {
-            return Policy.TimeoutAsync<HttpResponseMessage>(60); // 60 seconds per request
+            return Policy.TimeoutAsync<HttpResponseMessage>(300); // 300 seconds per request
         }
     }
 }

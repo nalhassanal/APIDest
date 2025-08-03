@@ -1,6 +1,6 @@
-﻿namespace Entities
+﻿namespace Entities.Tariff
 {
-    public class RawWorldBankData
+    public class ViewModelRawTariffData
     {
         public Indicator Indicator { get; set; }
         public Country Country { get; set; }

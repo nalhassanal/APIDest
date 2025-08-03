@@ -1,4 +1,5 @@
 using Entities;
+using Entities.DigitalPayment;
 using Entities.Tariff;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Caching.Memory;
@@ -6,6 +7,8 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Polly;
 using Polly.Wrap;
+using System.ComponentModel;
+using System.Xml.Linq;
 
 namespace API.Controllers
 {
@@ -16,14 +19,12 @@ namespace API.Controllers
         private readonly ILogger<HomeController> _logger;
         private readonly HttpClient _httpClient;
         private readonly IHttpClientFactory _httpClientFactory;
-        private readonly IMemoryCache _cache;
 
-        public HomeController(ILogger<HomeController> logger, IHttpClientFactory httpClientFactory, IMemoryCache cache)
+        public HomeController(ILogger<HomeController> logger, IHttpClientFactory httpClientFactory)
         {
             _logger = logger;
             _httpClient = httpClientFactory.CreateClient();
             _httpClientFactory = httpClientFactory;
-            _cache = cache;
         }
 
         private static readonly string[] Summaries = new[]
@@ -43,58 +44,49 @@ namespace API.Controllers
             .ToArray();
         }
 
-        // Test
-        [HttpGet("GetData/{CountryCode}")]
-        public async Task<IActionResult> GetWorldBankData(string CountryCode)
-        {
-            var url = $"http://api.worldbank.org/v2/country/{CountryCode}/indicator/NY.GDP.MKTP.CD?format=json";
+        //// Test
+        //[HttpGet("GetData/{CountryCode}")]
+        //public async Task<IActionResult> GetWorldBankData(string CountryCode)
+        //{
+        //    var url = $"http://api.worldbank.org/v2/country/{CountryCode}/indicator/NY.GDP.MKTP.CD?format=json";
 
-            try
-            {
-                var response = await _httpClient.GetAsync(url);
-                response.EnsureSuccessStatusCode();
+        //    try
+        //    {
+        //        var response = await _httpClient.GetAsync(url);
+        //        response.EnsureSuccessStatusCode();
 
-                var content = await response.Content.ReadAsStringAsync();
-                return Content(content, "application/json");
-            }
-            catch (HttpRequestException ex)
-            {
-                _logger.LogError(ex, "Error fetching World Bank data.");
-                return StatusCode(503, "Failed to contact World Bank API.");
-            }
-            catch (System.Exception ex)
-            {
-                _logger.LogError(ex, "Unhandled error.");
-                return StatusCode(500, "Internal server error.");
-            }
-        }
+        //        var content = await response.Content.ReadAsStringAsync();
+        //        return Content(content, "application/json");
+        //    }
+        //    catch (HttpRequestException ex)
+        //    {
+        //        _logger.LogError(ex, "Error fetching World Bank data.");
+        //        return StatusCode(503, "Failed to contact World Bank API.");
+        //    }
+        //    catch (System.Exception ex)
+        //    {
+        //        _logger.LogError(ex, "Unhandled error.");
+        //        return StatusCode(500, "Internal server error.");
+        //    }
+        //}
 
-        // Test: Get a basket of data from world bank
         [HttpGet("GetTarrifEscalationVsTradeDependenceData")]
-        [ProducesResponseType(typeof(List<FlatIndicatorRecord>), 200)]
-        public async Task<IActionResult> GetTarrifEscalationVsTradeDependenceData([FromQuery] string[] CountryCodes, [FromQuery] string StartYear, [FromQuery]string EndYear, CancellationToken cancellationToken)
+        public async Task<IActionResult> GetTarrifEscalationVsTradeDependenceData([FromQuery] string[] CountryCodes, [FromQuery] string timePeriodFrom, [FromQuery]string timePeriodTo, CancellationToken cancellationToken)
         {
-            // If query data exists in cache, return cached result
-            var cacheKey = $"WB_{string.Join('_', CountryCodes)}_{StartYear}_{EndYear}";
-
-            if (_cache.TryGetValue(cacheKey, out List<FlatIndicatorRecord> cachedResult))
-            {
-                return Ok(cachedResult);
-            }
-
             try
             {
                 var client = _httpClientFactory.CreateClient("WorldBankClient");
 
+                // multiple call to a single country, repeat foreach country
                 var tasks = CountryCodes
-                .SelectMany(country => _indicators.Select(async indicator =>
+                .SelectMany(country => _tariffIndicators.Select(async indicator =>
                 {
-                    var url = $"https://api.worldbank.org/v2/countries/{country}/indicators/{indicator}?date={StartYear}:{EndYear}&format=json";
+                    var url = $"https://api.worldbank.org/v2/countries/{country}/indicators/{indicator}?date={timePeriodFrom}:{timePeriodTo}&format=json";
                     var response = await client.GetAsync(url, cancellationToken);
                     response.EnsureSuccessStatusCode();
 
                     var content = await response.Content.ReadAsStringAsync(cancellationToken);
-                    var data = ExtractData(content);
+                    var data = ExtractTarrifRelatedData(content);
 
                     return data.Select(x => new FlatIndicatorRecord
                     {
@@ -114,9 +106,6 @@ namespace API.Controllers
 
                 var results = await Task.WhenAll(tasks);
                 var flatList = results.SelectMany(r => r).ToList();
-                
-                // Store cache for 12 hours
-                _cache.Set(cacheKey, flatList, TimeSpan.FromHours(12));
 
                 return Ok(flatList);
 
@@ -133,16 +122,49 @@ namespace API.Controllers
             }
         }
 
+        [HttpGet("GetMadeOrReceivedADigitalPaymentData")]
+        public async Task<IActionResult> GetMadeOrReceivedADigitalPaymentData([FromQuery] string[] CountryCodes, [FromQuery] string timePeriodFrom, [FromQuery] string timePeriodTo, CancellationToken cancellationToken)
+        {
+
+            try
+            {
+                var client = _httpClientFactory.CreateClient("WorldBankClient");
+
+                // single call, multi-country
+                var url = $"https://data360api.worldbank.org/data360/data?DATABASE_ID=WB_FINDEX&INDICATOR=WB_FINDEX_G20_ANY&REF_AREA={string.Join(",", CountryCodes)}&timePeriodFrom={timePeriodFrom}&timePeriodTo={timePeriodTo}&skip=0";
+                var response = await client.GetAsync(url, cancellationToken);
+                response.EnsureSuccessStatusCode();
+
+                var content = await response.Content.ReadAsStringAsync(cancellationToken);
+
+                var container = ExtractDigitalPaymentRelatedData(content);
+
+                var records = container?.value ?? new List<FlattenMakeOrReceivedDigitalPaymentRecord>();
+
+                return Ok(records);
+            }
+            catch (HttpRequestException ex)
+            {
+                _logger.LogError(ex, "Error fetching World Bank data.");
+                return StatusCode(503, "Failed to contact World Bank API.");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Unhandled error.");
+                return StatusCode(500, "Internal server error.");
+            }
+        }
+
         // Helper, to be moved to Helper class.
-        private List<RawWorldBankData> ExtractData(string json)
+        private List<ViewModelRawTariffData> ExtractTarrifRelatedData(string json)
         {
             var wrapper = JsonConvert.DeserializeObject<List<object>>(json);
             var rawDataJson = wrapper[1].ToString();
-            return JsonConvert.DeserializeObject<List<RawWorldBankData>>(rawDataJson);
+            return JsonConvert.DeserializeObject<List<ViewModelRawTariffData>>(rawDataJson);
         }
 
-        // Temporary helper
-        private static readonly List<string> _indicators = new()
+        // Temporary helper for tariff related api endpoints
+        private static readonly List<string> _tariffIndicators = new()
         {
             "TX.VAL.MANF.ZS.UN",
             "BX.KLT.DINV.WD.GD.ZS",
@@ -150,6 +172,10 @@ namespace API.Controllers
             "NE.TRD.GNFS.ZS"
         };
 
+        private ViewModelRawMakeDigitalPaymentData ExtractDigitalPaymentRelatedData(string json)
+        {
+            return JsonConvert.DeserializeObject<ViewModelRawMakeDigitalPaymentData>(json);
+        }
     }
 
 }
