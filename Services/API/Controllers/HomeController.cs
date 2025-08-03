@@ -1,6 +1,5 @@
 using Entities;
 using Microsoft.AspNetCore.Mvc;
-using System.Net.Http;
 
 namespace API.Controllers
 {
@@ -61,6 +60,17 @@ namespace API.Controllers
         }
 
         // Test: Get a basket of data from world bank
+        //[HttpGet("")]
+        //public async Task<IActionResult> GetTarrifEscalationVsTradeDependenceData()
+        //{
+        //    try
+        //    {
 
+        //    }
+        //    catch ()
+        //    {
+
+        //    }
+        //}
     }
 }
