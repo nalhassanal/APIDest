@@ -1,0 +1,42 @@
+trigger:
+  branches:
+    include:
+    - master
+resources:
+  repositories:
+  - repository: self
+variables:
+  azureSubscriptionEndpoint: 'AzureRMConnection'  # Updated to your ARM service connection name
+  imageRepository: 'api'
+  containerRegistry: 'paynetproject.azurecr.io'
+  dockerfilePath: '$(Build.SourcesDirectory)/Services/API/Dockerfile'
+  tag: '$(Build.BuildId)'
+stages:
+- stage: Build
+  displayName: Build and push stage
+  jobs:
+  - job: Build
+    displayName: Build
+    pool:
+      name: 'Default'  # Use your self-hosted agent in the default pool
+    steps:
+    - task: Docker@2
+      displayName: Build and push an image to container registry
+      inputs:
+        containerRegistry: 'paynetproject'
+        repository: '$(imageRepository)'
+        command: 'buildAndPush'
+        Dockerfile: '**/Dockerfile'
+        tags: '$(tag)'
+    - task: CopyFiles@2
+      displayName: 'Copy ARM template'
+      inputs:
+        SourceFolder: '$(Build.SourcesDirectory)'
+        Contents: '**/template.json'
+        TargetFolder: '$(Build.ArtifactStagingDirectory)'
+    - task: PublishBuildArtifacts@1
+      displayName: 'Publish artifacts'
+      inputs:
+        pathToPublish: '$(Build.ArtifactStagingDirectory)'
+        artifactName: 'drop'
+        publishLocation: 'Container'
