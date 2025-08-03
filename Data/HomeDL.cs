@@ -1,4 +1,5 @@
-﻿namespace Data
+﻿
+namespace Data
 {
     public class HomeDL
     {
