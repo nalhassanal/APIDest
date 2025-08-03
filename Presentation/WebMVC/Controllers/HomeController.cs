@@ -22,11 +22,11 @@ namespace WebMVC.Controllers
         }
 
         // Test GetWeatherForecast()
-        public async Task<ActionResult> GetWeatherForecast()
-        {
-            var result = await _homeProcess.GetWeatherForecast();
-            return View(result);
-        }
+        //public async Task<ActionResult> GetWeatherForecast()
+        //{
+        //    var result = await _homeProcess.GetWeatherForecast();
+        //    return View(result);
+        //}
 
         public IActionResult TariffAndTrade()
         {
