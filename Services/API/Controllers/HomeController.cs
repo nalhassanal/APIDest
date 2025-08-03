@@ -1,5 +1,8 @@
 using Entities;
+using Entities.Tariff;
 using Microsoft.AspNetCore.Mvc;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 
 namespace API.Controllers
 {
@@ -34,10 +37,10 @@ namespace API.Controllers
         }
 
         // Test
-        [HttpGet("GetData/{countryCode}")]
-        public async Task<IActionResult> GetWorldBankData(string countryCode)
+        [HttpGet("GetData/{CountryCode}")]
+        public async Task<IActionResult> GetWorldBankData(string CountryCode)
         {
-            var url = $"http://api.worldbank.org/v2/country/{countryCode}/indicator/NY.GDP.MKTP.CD?format=json";
+            var url = $"http://api.worldbank.org/v2/country/{CountryCode}/indicator/NY.GDP.MKTP.CD?format=json";
 
             try
             {
@@ -60,17 +63,112 @@ namespace API.Controllers
         }
 
         // Test: Get a basket of data from world bank
-        //[HttpGet("")]
-        //public async Task<IActionResult> GetTarrifEscalationVsTradeDependenceData()
-        //{
-        //    try
-        //    {
+        [HttpGet("GetTarrifEscalationVsTradeDependenceData")]
+        public async Task<IActionResult> GetTarrifEscalationVsTradeDependenceData(string CountryCode, string StartYear, string EndYear)
+        {
+            try
+            {
+                using var httpClient = new HttpClient();
 
-        //    }
-        //    catch ()
-        //    {
+                // Call World Bank APIs
+                var manufacturesExportsTask = httpClient.GetStringAsync($"https://api.worldbank.org/v2/countries/{CountryCode}/indicators/TX.VAL.MANF.ZS.UN?date={StartYear}:{EndYear}&format=json");
+                var fdiNetInflowsTask = httpClient.GetStringAsync($"https://api.worldbank.org/v2/countries/{CountryCode}/indicators/BX.KLT.DINV.WD.GD.ZS?date={StartYear}:{EndYear}&format=json");
+                var tariffRateTask = httpClient.GetStringAsync($"https://api.worldbank.org/v2/countries/{CountryCode}/indicators/TM.TAX.MRCH.WM.AR.ZS?date={StartYear}:{EndYear}&format=json");
+                var tradePercentageTask = httpClient.GetStringAsync($"https://api.worldbank.org/v2/countries/{CountryCode}/indicators/NE.TRD.GNFS.ZS?date={StartYear}:{EndYear}&format=json");
 
-        //    }
-        //}
+                await Task.WhenAll(manufacturesExportsTask, fdiNetInflowsTask, tariffRateTask, tradePercentageTask);
+
+                // Deserialize
+                var manufacturesRaw = ExtractData(manufacturesExportsTask.Result);
+                var fdiRaw = ExtractData(fdiNetInflowsTask.Result);
+                var tariffRaw = ExtractData(tariffRateTask.Result);
+                var tradeRaw = ExtractData(tradePercentageTask.Result);
+
+                var manufactures = manufacturesRaw.Select(x => new ViewModelManufacturesExports
+                {
+                    IndicatorId = x.Indicator?.Id,
+                    IndicatorName = x.Indicator?.Value,
+                    CountryId = x.Country?.Id,
+                    CountryName = x.Country?.Value,
+                    CountryIso3Code = x.CountryIso3Code,
+                    Year = int.TryParse(x.Date, out var y) ? y : 0,
+                    Value = x.Value,
+                    Unit = x.Unit,
+                    ObsStatus = x.ObsStatus,
+                    Decimal = x.Decimal
+                }).ToList();
+
+                var fdi = fdiRaw.Select(x => new ViewModelForeignDirectInvestmentNetInflows
+                {
+                    IndicatorId = x.Indicator?.Id,
+                    IndicatorName = x.Indicator?.Value,
+                    CountryId = x.Country?.Id,
+                    CountryName = x.Country?.Value,
+                    CountryIso3Code = x.CountryIso3Code,
+                    Year = int.TryParse(x.Date, out var y) ? y : 0,
+                    Value = x.Value,
+                    Unit = x.Unit,
+                    ObsStatus = x.ObsStatus,
+                    Decimal = x.Decimal
+                }).ToList();
+
+                var tariff = tariffRaw.Select(x => new ViewModelTariffRateAppliedWeightedMeanAllProducts
+                {
+                    IndicatorId = x.Indicator?.Id,
+                    IndicatorName = x.Indicator?.Value,
+                    CountryId = x.Country?.Id,
+                    CountryName = x.Country?.Value,
+                    CountryIso3Code = x.CountryIso3Code,
+                    Year = int.TryParse(x.Date, out var y) ? y : 0,
+                    Value = x.Value,
+                    Unit = x.Unit,
+                    ObsStatus = x.ObsStatus,
+                    Decimal = x.Decimal
+                }).ToList();
+
+                var trade = tradeRaw.Select(x => new ViewModelTradePercentageOfGDP
+                {
+                    IndicatorId = x.Indicator?.Id,
+                    IndicatorName = x.Indicator?.Value,
+                    CountryId = x.Country?.Id,
+                    CountryName = x.Country?.Value,
+                    CountryIso3Code = x.CountryIso3Code,
+                    Year = int.TryParse(x.Date, out var y) ? y : 0,
+                    Value = x.Value,
+                    Unit = x.Unit,
+                    ObsStatus = x.ObsStatus,
+                    Decimal = x.Decimal
+                }).ToList();
+
+                var result = new ViewModelTariffEscalationVsTradeDependence
+                {
+                    Country = CountryCode,
+                    ManufacturesExports = manufactures,
+                    ForeignDirectInvestmentNetInflows = fdi,
+                    TariffRateAppliedWeightedMeanAllProducts = tariff,
+                    TradePercentageOfGDP = trade
+                };
+
+                return Ok(result);
+            }
+            catch (HttpRequestException ex)
+            {
+                _logger.LogError(ex, "Error fetching World Bank data.");
+                return StatusCode(503, "Failed to contact World Bank API.");
+            }
+            catch (System.Exception ex)
+            {
+                _logger.LogError(ex, "Unhandled error.");
+                return StatusCode(500, "Internal server error.");
+            }
+        }
+
+        private List<RawWorldBankData> ExtractData(string json)
+        {
+            var wrapper = JsonConvert.DeserializeObject<List<object>>(json);
+            var rawDataJson = wrapper[1].ToString();
+            return JsonConvert.DeserializeObject<List<RawWorldBankData>>(rawDataJson);
+        }
     }
+
 }

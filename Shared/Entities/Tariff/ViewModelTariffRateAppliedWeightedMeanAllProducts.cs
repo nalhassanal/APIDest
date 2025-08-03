@@ -1,10 +1,11 @@
-﻿using System.Runtime.Serialization;
+﻿using System;
+using System.Runtime.Serialization;
 
-namespace Entities
+namespace Entities.Tariff
 {
     [Serializable]
     [DataContract]
-    public abstract class WorldBankIndicatorBase
+    public class ViewModelTariffRateAppliedWeightedMeanAllProducts
     {
         [DataMember]
         public string IndicatorId { get; set; }
