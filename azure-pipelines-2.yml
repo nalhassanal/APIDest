@@ -9,7 +9,7 @@ variables:
   azureSubscriptionEndpoint: 'AzureRMConnection'
   imageRepository: 'api'
   containerRegistry: 'paynetproject.azurecr.io'
-  dockerfilePath: '$(Build.SourcesDirectory)/Dockerfile'  # Updated to root
+  dockerfilePath: '$(Build.SourcesDirectory)/Dockerfile'
   tag: '$(Build.BuildId)'
 stages:
 - stage: Build
@@ -29,7 +29,7 @@ stages:
         azureSubscriptionEndpoint: $(azureSubscriptionEndpoint)
         azureContainerRegistry: $(containerRegistry)
         command: buildAndPush
-        repository: $(imageRepository)
+        repository: $(containerRegistry)/$(imageRepository)  # Updated to include ACR prefix
         dockerfile: $(dockerfilePath)
         tags: |
           $(tag)
