@@ -87,7 +87,7 @@ namespace API.Controllers
                 var tasks = CountryCodes
                 .SelectMany(country => _tariffIndicators.Select(async indicator =>
                 {
-                    var url = $"https://api.worldbank.org/v2/countries/{country}/indicators/{indicator}?date={timePeriodFrom}:{timePeriodTo}&format=json";
+                    var url = $"https://api.worldbank.org/v2/countries/{country}/indicators/{indicator}?date={timePeriodFrom}:{timePeriodTo}&format=json&per_page=100";
                     var response = await client.GetAsync(url, cancellationToken);
                     response.EnsureSuccessStatusCode();
 
@@ -172,7 +172,7 @@ namespace API.Controllers
                 var client = _httpClientFactory.CreateClient("WorldBankClient");
 
                 var countryList = string.Join(";", CountryCodes);
-                var url = $"https://api.worldbank.org/v2/country/{countryList}/indicator/EG.USE.ELEC.KH.PC?date={timePeriodFrom}:{timePeriodTo}&format=json";
+                var url = $"https://api.worldbank.org/v2/country/{countryList}/indicator/EG.USE.ELEC.KH.PC?date={timePeriodFrom}:{timePeriodTo}&format=json&per_page=1000";
 
                 var response = await client.GetAsync(url, cancellationToken);
                 response.EnsureSuccessStatusCode();
@@ -218,7 +218,7 @@ namespace API.Controllers
                 var client = _httpClientFactory.CreateClient("WorldBankClient");
 
                 var countryList = string.Join(";", CountryCodes);
-                var url = $"https://api.worldbank.org/v2/country/{countryList}/indicator/SP.DYN.TFRT.IN?date={timePeriodFrom}:{timePeriodTo}&format=json";
+                var url = $"https://api.worldbank.org/v2/country/{countryList}/indicator/SP.DYN.TFRT.IN?date={timePeriodFrom}:{timePeriodTo}&format=json&per_page=1000";
 
                 var response = await client.GetAsync(url, cancellationToken);
                 response.EnsureSuccessStatusCode();
@@ -264,7 +264,7 @@ namespace API.Controllers
                 var client = _httpClientFactory.CreateClient("WorldBankClient");
 
                 var countryList = string.Join(";", CountryCodes);
-                var url = $"https://api.worldbank.org/v2/country/{countryList}/indicator/SI.POV.GINI?date={timePeriodFrom}:{timePeriodTo}&format=json";
+                var url = $"https://api.worldbank.org/v2/country/{countryList}/indicator/SI.POV.GINI?date={timePeriodFrom}:{timePeriodTo}&format=json&per_page=1000";
 
                 var response = await client.GetAsync(url, cancellationToken);
                 response.EnsureSuccessStatusCode();
