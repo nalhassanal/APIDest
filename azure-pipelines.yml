@@ -1,0 +1,63 @@
+# Docker
+# Build and push an image to Azure Container Registry
+# https://docs.microsoft.com/azure/devops/pipelines/languages/docker
+
+trigger:
+- master
+
+resources:
+- repo: self
+
+variables:
+  # Container registry service connection established during pipeline creation
+  dockerRegistryServiceConnection: '23866836-6324-4d76-b67a-556fbc4f4c9a'
+  imageRepository: 'container'
+  containerRegistry: 'paynetproject.azurecr.io'
+  dockerfilePath: '$(Build.SourcesDirectory)/Services/API/Dockerfile'
+  tag: '$(Build.BuildId)'
+
+  # Agent VM image name
+  vmImageName: 'ubuntu-latest'
+
+stages:
+- stage: Build
+  displayName: Build and push stage
+  jobs:
+  - job: Build
+    displayName: Build
+    pool:
+      vmImage: $(vmImageName)
+    steps:
+    - task: Docker@2
+      displayName: Build and push an image to container registry
+      inputs:
+        command: buildAndPush
+        repository: $(imageRepository)
+        dockerfile: $(dockerfilePath)
+        containerRegistry: $(dockerRegistryServiceConnection)
+        tags: |
+          $(tag)
+
+steps:
+- task: Docker@2
+  displayName: 'Build and push Docker image'
+  inputs:
+    containerRegistryType: 'Azure Container Registry'
+    azureSubscriptionEndpoint: 'myAcrArmConnection'  # Name of the ARM service connection
+    azureContainerRegistry: 'myacr.azurecr.io'  # Login server of ACR
+    repository: 'myapi'
+    command: 'buildAndPush'
+    Dockerfile: '**/Dockerfile'
+    tags: '$(Build.BuildId)'
+- task: CopyFiles@2
+  displayName: 'Copy ARM template'
+  inputs:
+    SourceFolder: '$(Build.SourcesDirectory)'
+    Contents: '**/template.json'
+    TargetFolder: '$(Build.ArtifactStagingDirectory)'
+- task: PublishBuildArtifacts@1
+  displayName: 'Publish artifacts'
+  inputs:
+    pathToPublish: '$(Build.ArtifactStagingDirectory)'
+    artifactName: 'drop'
+    publishLocation: 'Container'
