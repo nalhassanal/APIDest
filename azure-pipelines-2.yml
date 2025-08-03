@@ -9,7 +9,7 @@ variables:
   azureSubscriptionEndpoint: 'AzureRMConnection'
   imageRepository: 'api'
   containerRegistry: 'paynetproject.azurecr.io'
-  dockerfilePath: '$(Build.SourcesDirectory)/Services/API/Dockerfile'
+  dockerfilePath: '$(Build.SourcesDirectory)/Dockerfile'  # Updated to root
   tag: '$(Build.BuildId)'
 stages:
 - stage: Build
@@ -20,6 +20,8 @@ stages:
     pool:
       name: 'Default'
     steps:
+    - script: ls -R $(Build.SourcesDirectory)
+      displayName: 'List files in build context'
     - task: Docker@2
       displayName: Build and push an image to container registry
       inputs:
