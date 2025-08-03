@@ -1,8 +1,11 @@
 using Entities;
 using Entities.Tariff;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Caching.Memory;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using Polly;
+using Polly.Wrap;
 
 namespace API.Controllers
 {
@@ -12,11 +15,15 @@ namespace API.Controllers
     {
         private readonly ILogger<HomeController> _logger;
         private readonly HttpClient _httpClient;
+        private readonly IHttpClientFactory _httpClientFactory;
+        private readonly IMemoryCache _cache;
 
-        public HomeController(ILogger<HomeController> logger, IHttpClientFactory httpClientFactory)
+        public HomeController(ILogger<HomeController> logger, IHttpClientFactory httpClientFactory, IMemoryCache cache)
         {
             _logger = logger;
             _httpClient = httpClientFactory.CreateClient();
+            _httpClientFactory = httpClientFactory;
+            _cache = cache;
         }
 
         private static readonly string[] Summaries = new[]
@@ -65,18 +72,29 @@ namespace API.Controllers
         // Test: Get a basket of data from world bank
         [HttpGet("GetTarrifEscalationVsTradeDependenceData")]
         [ProducesResponseType(typeof(List<FlatIndicatorRecord>), 200)]
-        public async Task<IActionResult> GetTarrifEscalationVsTradeDependenceData([FromQuery] string[] CountryCodes, [FromQuery] string StartYear, [FromQuery]string EndYear)
+        public async Task<IActionResult> GetTarrifEscalationVsTradeDependenceData([FromQuery] string[] CountryCodes, [FromQuery] string StartYear, [FromQuery]string EndYear, CancellationToken cancellationToken)
         {
+            // If query data exists in cache, return cached result
+            var cacheKey = $"WB_{string.Join('_', CountryCodes)}_{StartYear}_{EndYear}";
+
+            if (_cache.TryGetValue(cacheKey, out List<FlatIndicatorRecord> cachedResult))
+            {
+                return Ok(cachedResult);
+            }
+
             try
             {
-                using var httpClient = new HttpClient();
+                var client = _httpClientFactory.CreateClient("WorldBankClient");
 
                 var tasks = CountryCodes
                 .SelectMany(country => _indicators.Select(async indicator =>
                 {
                     var url = $"https://api.worldbank.org/v2/countries/{country}/indicators/{indicator}?date={StartYear}:{EndYear}&format=json";
-                    var response = await httpClient.GetStringAsync(url);
-                    var data = ExtractData(response);
+                    var response = await client.GetAsync(url, cancellationToken);
+                    response.EnsureSuccessStatusCode();
+
+                    var content = await response.Content.ReadAsStringAsync(cancellationToken);
+                    var data = ExtractData(content);
 
                     return data.Select(x => new FlatIndicatorRecord
                     {
@@ -96,6 +114,9 @@ namespace API.Controllers
 
                 var results = await Task.WhenAll(tasks);
                 var flatList = results.SelectMany(r => r).ToList();
+                
+                // Store cache for 12 hours
+                _cache.Set(cacheKey, flatList, TimeSpan.FromHours(12));
 
                 return Ok(flatList);
 
