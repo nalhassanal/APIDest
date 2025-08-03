@@ -2,7 +2,7 @@ trigger:
 - master  # Or your branch
 
 pool:
-  name: 'default'
+  name: 'default'  # Or your self-hosted agent pool
 
 steps:
 - task: swellaby.mirror-git-repository.mirror-git-repository-vsts-task.mirror-git-repository-vsts-task@1
@@ -12,7 +12,5 @@ steps:
     sourceGitRepositoryPersonalAccessToken: '$(sourcePAT)'
     destinationGitRepositoryUri: 'https://github.com/nalhassanal/APIDest.git'
     destinationGitRepositoryPersonalAccessToken: '$(destPAT)'
-    # Optional:
-    # sourceGitRepositoryCloneDirectoryName: ''
-    # sourceVerifySSLCertificate: true
-    # destinationVerifySSLCertificate: true
+    sourceVerifySSLCertificate: true
+    destinationVerifySSLCertificate: true
