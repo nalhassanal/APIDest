@@ -1,0 +1,30 @@
+trigger:
+  - main
+
+pool:
+  vmImage: 'ubuntu-latest' # Default Azure-hosted VM image
+
+steps:
+  - task: NodeTool@0
+    inputs:
+      versionSpec: '16.x'
+    displayName: 'Install Node.js'
+
+  - script: |
+      npm install -g newman
+      newman run tests/postman/api_test_collection.json \
+        --environment tests/postman/api_env.json \
+        --env-var API_URL=$(API_URL) \
+        --reporters cli,junit \
+        --reporter-junit-export newman-report.xml
+    displayName: 'Run Postman Tests with Newman'
+    env:
+      API_URL: $(API_URL) # Define in Azure Pipelines variables
+
+  - task: PublishTestResults@2
+    inputs:
+      testResultsFormat: 'JUnit'
+      testResultsFiles: 'newman-report.xml'
+      failTaskOnFailedTests: true
+    displayName: 'Publish Newman Test Results'
+    condition: always() # Publish even if tests fail
