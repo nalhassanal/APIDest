@@ -1,6 +1,7 @@
 using Microsoft.Extensions.DependencyInjection;
 using Polly;
 using Polly.Extensions.Http;
+using AspNetCoreRateLimit;
 
 namespace API
 {
@@ -12,14 +13,18 @@ namespace API
 
             // Add services to the container.
             builder.Services.AddHttpClient();
-
             builder.Services.AddControllers();
+
+            // ? Add rate limiting services
+            builder.Services.AddMemoryCache();
+            builder.Services.Configure<IpRateLimitOptions>(builder.Configuration.GetSection("IpRateLimiting"));
+            builder.Services.AddInMemoryRateLimiting();
+            builder.Services.AddSingleton<IRateLimitConfiguration, RateLimitConfiguration>();
 
             builder.Services.AddHttpClient("WorldBankClient")
                 .AddPolicyHandler(GetRetryPolicy())
                 .AddPolicyHandler(GetTimeoutPolicy());
 
-            // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen();
 
@@ -34,6 +39,9 @@ namespace API
 
             app.UseHttpsRedirection();
 
+            // ? Enable IP rate limiting middleware
+            app.UseIpRateLimiting();
+
             app.UseAuthorization();
 
             app.MapControllers();
@@ -45,8 +53,8 @@ namespace API
         static IAsyncPolicy<HttpResponseMessage> GetRetryPolicy()
         {
             return HttpPolicyExtensions
-                .HandleTransientHttpError() // 5xx and 408 errors
-                .OrResult(msg => (int)msg.StatusCode == 429) // Too Many Requests
+                .HandleTransientHttpError()
+                .OrResult(msg => (int)msg.StatusCode == 429)
                 .WaitAndRetryAsync(
                     retryCount: 3,
                     sleepDurationProvider: retryAttempt => TimeSpan.FromSeconds(Math.Pow(2, retryAttempt))
@@ -56,8 +64,7 @@ namespace API
         // Polly timeout helper
         static IAsyncPolicy<HttpResponseMessage> GetTimeoutPolicy()
         {
-            return Policy.TimeoutAsync<HttpResponseMessage>(300); // 300 seconds per request
+            return Policy.TimeoutAsync<HttpResponseMessage>(300);
         }
     }
 }
-
