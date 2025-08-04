@@ -2,7 +2,7 @@ trigger:
   - main
 
 pool:
-  vmImage: 'ubuntu-latest' # Default Azure-hosted VM image
+  name: 'Default' # Default Azure-hosted VM image
 
 steps:
   - task: NodeTool@0
