@@ -1,0 +1,182 @@
+{
+	"info": {
+		"_postman_id": "9192e412-29c7-47c1-a78f-de0859488763",
+		"name": "Single-code",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "40074443"
+	},
+	"item": [
+		{
+			"name": "Endpoint 1",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{baseURL}}/api/Home/GetTarrifEscalationVsTradeDependenceData?CountryCodes={{CountryCodes}}&timePeriodFrom={{timePeriodFrom}}&timePeriodTo={{timePeriodTo}}",
+					"host": [
+						"{{baseURL}}"
+					],
+					"path": [
+						"api",
+						"Home",
+						"GetTarrifEscalationVsTradeDependenceData"
+					],
+					"query": [
+						{
+							"key": "CountryCodes",
+							"value": "{{CountryCodes}}"
+						},
+						{
+							"key": "timePeriodFrom",
+							"value": "{{timePeriodFrom}}"
+						},
+						{
+							"key": "timePeriodTo",
+							"value": "{{timePeriodTo}}"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Endpoint 2",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{baseURL}}/api/Home/GetMadeOrReceivedADigitalPaymentData?CountryCodes={{CountryCodes}}&timePeriodFrom={{timePeriodFrom}}&timePeriodTo={{timePeriodTo}}",
+					"host": [
+						"{{baseURL}}"
+					],
+					"path": [
+						"api",
+						"Home",
+						"GetMadeOrReceivedADigitalPaymentData"
+					],
+					"query": [
+						{
+							"key": "CountryCodes",
+							"value": "{{CountryCodes}}"
+						},
+						{
+							"key": "timePeriodFrom",
+							"value": "{{timePeriodFrom}}"
+						},
+						{
+							"key": "timePeriodTo",
+							"value": "{{timePeriodTo}}"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Endpoint 3",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{baseURL}}/api/Home/GetElectricPowerConsumptionInKwHrsPerCapitaData?CountryCodes={{CountryCodes}}&timePeriodFrom={{timePeriodFrom}}&timePeriodTo={{timePeriodTo}}",
+					"host": [
+						"{{baseURL}}"
+					],
+					"path": [
+						"api",
+						"Home",
+						"GetElectricPowerConsumptionInKwHrsPerCapitaData"
+					],
+					"query": [
+						{
+							"key": "CountryCodes",
+							"value": "{{CountryCodes}}"
+						},
+						{
+							"key": "timePeriodFrom",
+							"value": "{{timePeriodFrom}}"
+						},
+						{
+							"key": "timePeriodTo",
+							"value": "{{timePeriodTo}}"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Endpoint 4",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{baseURL}}/api/Home/GetFertilityRateData?CountryCodes={{CountryCodes}}&timePeriodFrom={{timePeriodFrom}}&timePeriodTo={{timePeriodTo}}",
+					"host": [
+						"{{baseURL}}"
+					],
+					"path": [
+						"api",
+						"Home",
+						"GetFertilityRateData"
+					],
+					"query": [
+						{
+							"key": "CountryCodes",
+							"value": "{{CountryCodes}}"
+						},
+						{
+							"key": "timePeriodFrom",
+							"value": "{{timePeriodFrom}}"
+						},
+						{
+							"key": "timePeriodTo",
+							"value": "{{timePeriodTo}}"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Endpoint 5",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{baseURL}}/api/Home/GetGiniIndex?CountryCodes={{CountryCodes}}&timePeriodFrom={{timePeriodFrom}}&timePeriodTo={{timePeriodTo}}",
+					"host": [
+						"{{baseURL}}"
+					],
+					"path": [
+						"api",
+						"Home",
+						"GetGiniIndex"
+					],
+					"query": [
+						{
+							"key": "CountryCodes",
+							"value": "{{CountryCodes}}"
+						},
+						{
+							"key": "timePeriodFrom",
+							"value": "{{timePeriodFrom}}"
+						},
+						{
+							"key": "timePeriodTo",
+							"value": "{{timePeriodTo}}"
+						}
+					]
+				}
+			},
+			"response": []
+		}
+	],
+	"variable": [
+		{
+			"key": "baseURL",
+			"value": "http://api-deploy.eastus.azurecontainer.io:8080",
+			"type": "default"
+		}
+	]
+}
