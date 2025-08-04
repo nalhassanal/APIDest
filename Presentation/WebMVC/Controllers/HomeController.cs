@@ -28,12 +28,28 @@ namespace WebMVC.Controllers
         //    return View(result);
         //}
 
-        public IActionResult TariffAndTrade()
+        public IActionResult ShowTariffAndTradeDashboard()
         {
             return View();
         }
 
-        public IActionResult MadeOrReceivedDigitalPayment()
+
+        public IActionResult ShowMadeOrReceivedDigitalPaymentDashboard()
+        {
+            return View();
+        }
+
+        public IActionResult ShowElectricPowerConsumptionDashboard()
+        {
+            return View();
+        }
+
+        public IActionResult ShowFertilityRateDashboard()
+        {
+            return View();
+        }
+
+        public IActionResult ShowGiniIndexDashboard()
         {
             return View();
         }
